@@ -10,11 +10,30 @@ if %errorlevel% neq 0 (
     exit /b 1
 )
 
+REM Check if .env file exists and print its contents
+if not exist .env (
+    echo Error: .env file not found in %cd%.
+    pause
+    exit /b 1
+) else (
+    echo Found .env file. Contents:
+    type .env
+)
+
 REM Install dependencies if needed
 if not exist node_modules (
     echo Installing dependencies...
     call npm install
 )
+
+REM Print package.json start script
+if exist package.json (
+    echo Checking start script in package.json...
+    findstr /C:"\"start\"" package.json
+)
+
+REM Pause to let user see the above output
+pause
 
 REM Start the application
 echo Starting the server...
