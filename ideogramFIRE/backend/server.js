@@ -1,7 +1,15 @@
 // Main Express server for IdeogramFIRE
-require('dotenv').config();
-const express = require('express');
 const path = require('path');
+const dotenv = require('dotenv');
+dotenv.config({ path: path.join(__dirname, '../../.env') });
+
+// Log environment variables for debugging
+console.log('Environment variables loaded:');
+console.log('OPENAI_API_KEY:', process.env.OPENAI_API_KEY ? 'Present' : 'Missing');
+console.log('IDEOGRAM_API_KEY:', process.env.IDEOGRAM_API_KEY ? 'Present' : 'Missing');
+console.log('PORT:', process.env.PORT);
+
+const express = require('express');
 const cors = require('cors');
 
 const app = express();

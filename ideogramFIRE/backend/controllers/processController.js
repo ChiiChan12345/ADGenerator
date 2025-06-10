@@ -6,6 +6,10 @@ const JSZip = require('jszip');
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const IDEOGRAM_API_KEY = process.env.IDEOGRAM_API_KEY;
 
+console.log('Environment variables loaded:');
+console.log('OPENAI_API_KEY:', OPENAI_API_KEY ? 'Present' : 'Missing');
+console.log('IDEOGRAM_API_KEY:', IDEOGRAM_API_KEY ? 'Present' : 'Missing');
+
 // Helper: call OpenAI Chat Completions API for 16 marketing prompts
 async function callOpenAI(imageBuffer, imageMimetype, prompt) {
   console.log(`[${new Date().toISOString()}] Calling OpenAI API...`);
