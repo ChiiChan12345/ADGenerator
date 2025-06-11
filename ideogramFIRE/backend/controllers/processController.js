@@ -10,14 +10,14 @@ console.log('Environment variables loaded:');
 console.log('OPENAI_API_KEY:', OPENAI_API_KEY ? 'Present' : 'Missing');
 console.log('IDEOGRAM_API_KEY:', IDEOGRAM_API_KEY ? 'Present' : 'Missing');
 
-// Helper: call OpenAI Chat Completions API for 16 marketing prompts
+// Helper: call OpenAI Chat Completions API for 3 marketing prompts
 async function callOpenAI(imageBuffer, imageMimetype, prompt) {
   console.log(`[${new Date().toISOString()}] Calling OpenAI API...`);
   const imageBase64 = imageBuffer.toString('base64');
   const messages = [
     {
       role: 'system',
-      content: 'You are a marketer and image analyst. You will be given an image and a prompting Guide for Ideogram. Analyze the image in detail, Look for for Call to action in the image.  then generate 16 distinct, creative, and marketable prompts for generating new images inspired by the original. You will be given age group of viewers. prompt must be made that are more likely to convert for that age group. Each prompt should be unique, and must adhere to magic prompt guidelines. Output ONLY the 16 prompts as a valid JSON array, and nothing else.'
+      content: 'You are a marketer and image analyst. You will be given an image and a prompting Guide for Ideogram. Analyze the image in detail, Look for for Call to action in the image.  then generate 3 distinct, creative, and marketable prompts for generating new images inspired by the original. You will be given age group of viewers. prompt must be made that are more likely to convert for that age group. Each prompt should be unique, and must adhere to magic prompt guidelines. Output ONLY the 3 prompts as a valid JSON array, and nothing else.'
     },
     {
       role: 'user',
@@ -55,11 +55,11 @@ async function callOpenAI(imageBuffer, imageMimetype, prompt) {
   let prompts;
   try {
     prompts = JSON.parse(rawContent);
-    if (!Array.isArray(prompts) || prompts.length !== 16) throw new Error('Not 16 prompts');
+    if (!Array.isArray(prompts) || prompts.length !== 3) throw new Error('Not 3 prompts');
   } catch (e) {
-    console.error('Failed to parse 16 prompts from OpenAI response:', e.message);
+    console.error('Failed to parse 3 prompts from OpenAI response:', e.message);
     console.error('Sanitized OpenAI response:', rawContent);
-    throw new Error('Failed to parse 16 prompts from OpenAI response.');
+    throw new Error('Failed to parse 3 prompts from OpenAI response.');
   }
   return prompts;
 }
@@ -71,21 +71,26 @@ async function callIdeogram(prompt) {
   form.append('prompt', prompt);
   form.append('rendering_speed', 'TURBO');
   form.append('magic_prompt', 'ON');
-  const response = await axios.post(
-    'https://api.ideogram.ai/v1/ideogram-v3/generate',
-    form,
-    {
-      headers: {
-        ...form.getHeaders(),
-        'Api-Key': IDEOGRAM_API_KEY,
-      },
-      maxBodyLength: Infinity,
-    }
-  );
-  console.log(`[${new Date().toISOString()}] Ideogram API response:`, JSON.stringify(response.data, null, 2));
-  const urls = (response.data.data || []).map(img => img.url);
-  console.log(`[${new Date().toISOString()}] Extracted URLs:`, urls);
-  return urls;
+  try {
+    const response = await axios.post(
+      'https://api.ideogram.ai/v1/ideogram-v3/generate',
+      form,
+      {
+        headers: {
+          ...form.getHeaders(),
+          'Api-Key': IDEOGRAM_API_KEY,
+        },
+        maxBodyLength: Infinity,
+      }
+    );
+    console.log(`[${new Date().toISOString()}] Ideogram API response:`, JSON.stringify(response.data, null, 2));
+    const urls = (response.data.data || []).map(img => img.url);
+    console.log(`[${new Date().toISOString()}] Extracted URLs:`, urls);
+    return urls;
+  } catch (error) {
+    console.error(`[${new Date().toISOString()}] Ideogram API error:`, error.response ? JSON.stringify(error.response.data) : error.message);
+    throw error;
+  }
 }
 
 // Controller

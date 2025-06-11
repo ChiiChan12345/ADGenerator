@@ -35,6 +35,8 @@ function App() {
   const [results, setResults] = useState([]);
   const [prompts, setPrompts] = useState([]);
   const [selectedImage, setSelectedImage] = useState(null);
+  const [pages, setPages] = useState([]);
+  const [currentPage, setCurrentPage] = useState(0);
 
   // Handle arrow key navigation
   useEffect(() => {
@@ -119,9 +121,8 @@ function App() {
 
       const data = await response.json();
       if (data.results && Array.isArray(data.results)) {
-        setResults(data.results);
-        setPrompts(data.prompts || []);
-        setGeneratedImages(data.results);
+        setPages([...pages, { results: data.results, prompts: data.prompts }]);
+        setCurrentPage(pages.length);
       } else {
         throw new Error('Invalid response format from server');
       }
@@ -248,19 +249,30 @@ function App() {
 
       {error && <p className="error">{error}</p>}
 
-      {generatedImages.length > 0 && (
+      {pages.length > 0 && (
         <div className="results-section">
-          <h2>Generated Images</h2>
+          <h2>Generated {pages[currentPage].results.length} Images</h2>
+          <button onClick={handleExportAll} className="export-button" disabled={isExporting}>
+            {isExporting ? 'Exporting...' : 'Export All as ZIP'}
+          </button>
+          <div className="page-navigation">
+            {pages.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => setCurrentPage(index)}
+                className={currentPage === index ? 'active' : ''}
+              >
+                {index + 1}
+              </button>
+            ))}
+          </div>
           <div className="image-grid">
-            {generatedImages.map((url, index) => (
-              <div key={index} className="image-item" onClick={() => handleImageClick(url, prompts[index])}>
+            {pages[currentPage].results.map((url, index) => (
+              <div key={index} className="image-item" onClick={() => handleImageClick(url, pages[currentPage].prompts[index])}>
                 <img src={url} alt={`Generated ${index + 1}`} />
               </div>
             ))}
           </div>
-          <button onClick={handleExportAll} className="export-button" disabled={isExporting}>
-            {isExporting ? 'Exporting...' : 'Export All as ZIP'}
-          </button>
         </div>
       )}
 
@@ -268,7 +280,21 @@ function App() {
         <div className="modal" onClick={handleCloseModal}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
             <span className="close" onClick={handleCloseModal}>&times;</span>
+            <div className="arrow arrow-left" onClick={(e) => {
+              e.stopPropagation();
+              const currentIndex = pages[currentPage].results.findIndex(img => img === selectedImage.url);
+              if (currentIndex > 0) {
+                setSelectedImage({ url: pages[currentPage].results[currentIndex - 1], prompt: pages[currentPage].prompts[currentIndex - 1] });
+              }
+            }}>&lt;</div>
             <img src={selectedImage.url} alt="Selected" />
+            <div className="arrow arrow-right" onClick={(e) => {
+              e.stopPropagation();
+              const currentIndex = pages[currentPage].results.findIndex(img => img === selectedImage.url);
+              if (currentIndex < pages[currentPage].results.length - 1) {
+                setSelectedImage({ url: pages[currentPage].results[currentIndex + 1], prompt: pages[currentPage].prompts[currentIndex + 1] });
+              }
+            }}>&gt;</div>
             <p>{selectedImage.prompt}</p>
           </div>
         </div>
