@@ -1,7 +1,7 @@
 // Main Express server for IdeogramFIRE
 const path = require('path');
 const dotenv = require('dotenv');
-dotenv.config({ path: path.join(__dirname, '../../.env') });
+dotenv.config({ path: path.join(__dirname, '../.env') });
 
 // Log environment variables for debugging
 console.log('Environment variables loaded:');
