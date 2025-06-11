@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './App.css';
 import promptGuide from './PromptFORGPT';
 import JSZip from 'jszip';
@@ -35,6 +35,27 @@ function App() {
   const [results, setResults] = useState([]);
   const [prompts, setPrompts] = useState([]);
   const [selectedImage, setSelectedImage] = useState(null);
+
+  // Handle arrow key navigation
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (!selectedImage) return;
+
+      const currentIndex = results.findIndex(img => img === selectedImage.url);
+      if (currentIndex === -1) return;
+
+      if (event.key === 'ArrowLeft') {
+        const prevIndex = (currentIndex - 1 + results.length) % results.length;
+        setSelectedImage({ url: results[prevIndex], prompt: prompts[prevIndex] });
+      } else if (event.key === 'ArrowRight') {
+        const nextIndex = (currentIndex + 1) % results.length;
+        setSelectedImage({ url: results[nextIndex], prompt: prompts[nextIndex] });
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedImage, results, prompts]);
 
   const handleImageChange = (event) => {
     const files = Array.from(event.target.files);
@@ -199,7 +220,7 @@ function App() {
             className="sentiment-select"
             required
           >
-            <option value="">Select a sentiment...</option>
+            <option value="">Select sentiment</option>
             {sentimentOptions.map((option) => (
               <option key={option} value={option}>
                 {option}
@@ -220,42 +241,35 @@ function App() {
           />
         </div>
 
-        {error && <div className="error">{error}</div>}
-        
-        <button type="submit" disabled={loading} className="generate-button">
-          {loading ? 'Generating...' : 'Generate'}
+        <button type="submit" className="submit-button" disabled={loading}>
+          {loading ? 'Processing...' : 'Generate Images'}
         </button>
       </form>
-      {results.length > 0 && (
-        <div className="results">
+
+      {error && <p className="error">{error}</p>}
+
+      {generatedImages.length > 0 && (
+        <div className="results-section">
           <h2>Generated Images</h2>
-          <button className="export-all-btn" onClick={handleExportAll} style={{marginBottom: '1rem'}}>Export All</button>
-          <div className="images">
-            {results.map((url, idx) => (
-              <div key={url} className="image-block">
-                <img 
-                  src={url} 
-                  alt={`Generated ${idx + 1}`} 
-                  onClick={() => handleImageClick(url, prompts[idx])}
-                  className="clickable-image"
-                />
-                <a href={url} download target="_blank" rel="noopener noreferrer" className="download-btn">Download</a>
-                {prompts[idx] && <div className="prompt-caption">{prompts[idx]}</div>}
+          <div className="image-grid">
+            {generatedImages.map((url, index) => (
+              <div key={index} className="image-item" onClick={() => handleImageClick(url, prompts[index])}>
+                <img src={url} alt={`Generated ${index + 1}`} />
               </div>
             ))}
           </div>
+          <button onClick={handleExportAll} className="export-button" disabled={isExporting}>
+            {isExporting ? 'Exporting...' : 'Export All as ZIP'}
+          </button>
         </div>
       )}
 
-      {/* Image Modal */}
       {selectedImage && (
-        <div className="modal-overlay" onClick={handleCloseModal}>
+        <div className="modal" onClick={handleCloseModal}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <button className="modal-close" onClick={handleCloseModal}>×</button>
-            <img src={selectedImage.url} alt="Enlarged view" className="modal-image" />
-            {selectedImage.prompt && (
-              <div className="modal-prompt">{selectedImage.prompt}</div>
-            )}
+            <span className="close" onClick={handleCloseModal}>&times;</span>
+            <img src={selectedImage.url} alt="Selected" />
+            <p>{selectedImage.prompt}</p>
           </div>
         </div>
       )}
