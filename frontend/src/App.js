@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './App.css';
 import promptGuide from './PromptFORGPT';
 import JSZip from 'jszip';
@@ -35,6 +35,29 @@ function App() {
   const [results, setResults] = useState([]);
   const [prompts, setPrompts] = useState([]);
   const [selectedImage, setSelectedImage] = useState(null);
+  const [pages, setPages] = useState([]);
+  const [currentPage, setCurrentPage] = useState(0);
+
+  // Handle arrow key navigation
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (!selectedImage) return;
+
+      const currentIndex = results.findIndex(img => img === selectedImage.url);
+      if (currentIndex === -1) return;
+
+      if (event.key === 'ArrowLeft') {
+        const prevIndex = (currentIndex - 1 + results.length) % results.length;
+        setSelectedImage({ url: results[prevIndex], prompt: prompts[prevIndex] });
+      } else if (event.key === 'ArrowRight') {
+        const nextIndex = (currentIndex + 1) % results.length;
+        setSelectedImage({ url: results[nextIndex], prompt: prompts[nextIndex] });
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedImage, results, prompts]);
 
   const handleImageChange = (event) => {
     const files = Array.from(event.target.files);
@@ -98,9 +121,8 @@ function App() {
 
       const data = await response.json();
       if (data.results && Array.isArray(data.results)) {
-        setResults(data.results);
-        setPrompts(data.prompts || []);
-        setGeneratedImages(data.results);
+        setPages([...pages, { results: data.results, prompts: data.prompts }]);
+        setCurrentPage(pages.length);
       } else {
         throw new Error('Invalid response format from server');
       }
@@ -199,7 +221,7 @@ function App() {
             className="sentiment-select"
             required
           >
-            <option value="">Select a sentiment...</option>
+            <option value="">Select sentiment</option>
             {sentimentOptions.map((option) => (
               <option key={option} value={option}>
                 {option}
@@ -220,42 +242,60 @@ function App() {
           />
         </div>
 
-        {error && <div className="error">{error}</div>}
-        
-        <button type="submit" disabled={loading} className="generate-button">
-          {loading ? 'Generating...' : 'Generate'}
+        <button type="submit" className="submit-button" disabled={loading}>
+          {loading ? 'Processing...' : 'Generate Images'}
         </button>
       </form>
-      {results.length > 0 && (
-        <div className="results">
-          <h2>Generated {results.length} Images</h2>
-          <button className="export-all-btn" onClick={handleExportAll} style={{marginBottom: '1rem'}}>Export All</button>
-          <div className="images">
-            {results.map((url, idx) => (
-              <div key={url} className="image-block">
-                <img 
-                  src={url} 
-                  alt={`Generated ${idx + 1}`} 
-                  onClick={() => handleImageClick(url, prompts[idx])}
-                  className="clickable-image"
-                />
-                <a href={url} download target="_blank" rel="noopener noreferrer" className="download-btn">Download</a>
-                {prompts[idx] && <div className="prompt-caption">{prompts[idx]}</div>}
+
+      {error && <p className="error">{error}</p>}
+
+      {pages.length > 0 && (
+        <div className="results-section">
+          <h2>Generated {pages[currentPage].results.length} Images</h2>
+          <button onClick={handleExportAll} className="export-button" disabled={isExporting}>
+            {isExporting ? 'Exporting...' : 'Export All as ZIP'}
+          </button>
+          <div className="page-navigation">
+            {pages.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => setCurrentPage(index)}
+                className={currentPage === index ? 'active' : ''}
+              >
+                {index + 1}
+              </button>
+            ))}
+          </div>
+          <div className="image-grid">
+            {pages[currentPage].results.map((url, index) => (
+              <div key={index} className="image-item" onClick={() => handleImageClick(url, pages[currentPage].prompts[index])}>
+                <img src={url} alt={`Generated ${index + 1}`} />
               </div>
             ))}
           </div>
         </div>
       )}
 
-      {/* Image Modal */}
       {selectedImage && (
-        <div className="modal-overlay" onClick={handleCloseModal}>
+        <div className="modal" onClick={handleCloseModal}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <button className="modal-close" onClick={handleCloseModal}>×</button>
-            <img src={selectedImage.url} alt="Enlarged view" className="modal-image" />
-            {selectedImage.prompt && (
-              <div className="modal-prompt">{selectedImage.prompt}</div>
-            )}
+            <span className="close" onClick={handleCloseModal}>&times;</span>
+            <div className="arrow arrow-left" onClick={(e) => {
+              e.stopPropagation();
+              const currentIndex = pages[currentPage].results.findIndex(img => img === selectedImage.url);
+              if (currentIndex > 0) {
+                setSelectedImage({ url: pages[currentPage].results[currentIndex - 1], prompt: pages[currentPage].prompts[currentIndex - 1] });
+              }
+            }}>&lt;</div>
+            <img src={selectedImage.url} alt="Selected" />
+            <div className="arrow arrow-right" onClick={(e) => {
+              e.stopPropagation();
+              const currentIndex = pages[currentPage].results.findIndex(img => img === selectedImage.url);
+              if (currentIndex < pages[currentPage].results.length - 1) {
+                setSelectedImage({ url: pages[currentPage].results[currentIndex + 1], prompt: pages[currentPage].prompts[currentIndex + 1] });
+              }
+            }}>&gt;</div>
+            <p>{selectedImage.prompt}</p>
           </div>
         </div>
       )}
