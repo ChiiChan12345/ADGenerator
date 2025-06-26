@@ -25,8 +25,9 @@ const corsOptions = {
       'http://localhost:3000',
       'http://127.0.0.1:3000',
       'http://localhost:3001',
-      // AWS Amplify domains - replace with your actual domain
-      /^https:\/\/.*\.amplifyapp\.com$/,
+      // Railway domains
+      /^https:\/\/.*\.railway\.app$/,
+      /^https:\/\/.*\.up\.railway\.app$/,
       // Add your custom domain if you have one:
       // 'https://your-custom-domain.com',
     ];
