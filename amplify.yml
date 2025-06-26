@@ -3,20 +3,20 @@ frontend:
   phases:
     preBuild:
       commands:
-        - cd ideogramFIRE && npm ci
-        - cd ideogramFIRE/frontend && npm ci
+        - npm ci
+        - cd frontend && npm ci
     build:
       commands:
-        - cd ideogramFIRE/frontend && npm run build
-        - cd ideogramFIRE && npm run build
+        - cd frontend && npm run build
+        - npm run build
     postBuild:
       commands:
         - echo "Build completed"
   artifacts:
-    baseDirectory: ideogramFIRE/frontend/build
+    baseDirectory: frontend/build
     files:
       - '**/*'
   cache:
     paths:
-      - ideogramFIRE/node_modules/**/*
-      - ideogramFIRE/frontend/node_modules/**/* 
+      - node_modules/**/*
+      - frontend/node_modules/**/* 
