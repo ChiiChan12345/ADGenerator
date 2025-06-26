@@ -4,6 +4,16 @@ import promptGuide from './PromptFORGPT';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
 
+// Helper function to convert file to base64
+const fileToBase64 = (file) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result.split(',')[1]);
+    reader.onerror = error => reject(error);
+  });
+};
+
 function App() {
   const [images, setImages] = useState([]);
   const [vertical, setVertical] = useState('');
@@ -109,7 +119,7 @@ function App() {
     formData.append('prompt', promptString);
 
     try {
-      const response = await fetch('http://localhost:3001/api/process', {
+      const response = await fetch('/api/process', {
         method: 'POST',
         body: formData,
       });
@@ -139,7 +149,7 @@ function App() {
     setError('');
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:3001/api/export-zip', {
+      const response = await fetch('/api/export-zip', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

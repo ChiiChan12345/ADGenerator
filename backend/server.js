@@ -25,15 +25,25 @@ const corsOptions = {
       'http://localhost:3000',
       'http://127.0.0.1:3000',
       'http://localhost:3001',
-      // Add your production domain here:
-      // 'https://your-domain.com',
-      // 'https://your-app.railway.app',
-      // 'https://your-app.render.com'
+      // AWS Amplify domains - replace with your actual domain
+      /^https:\/\/.*\.amplifyapp\.com$/,
+      // Add your custom domain if you have one:
+      // 'https://your-custom-domain.com',
     ];
     
-    if (allowedOrigins.indexOf(origin) !== -1) {
+    const isAllowed = allowedOrigins.some(allowedOrigin => {
+      if (typeof allowedOrigin === 'string') {
+        return allowedOrigin === origin;
+      } else if (allowedOrigin instanceof RegExp) {
+        return allowedOrigin.test(origin);
+      }
+      return false;
+    });
+    
+    if (isAllowed) {
       callback(null, true);
     } else {
+      console.log('CORS blocked origin:', origin);
       callback(new Error('Not allowed by CORS'));
     }
   },

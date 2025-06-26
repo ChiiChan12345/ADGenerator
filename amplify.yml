@@ -4,14 +4,9 @@ frontend:
     preBuild:
       commands:
         - npm ci
-        - cd frontend && npm ci
     build:
       commands:
-        - cd frontend && npm run build
         - npm run build
-    postBuild:
-      commands:
-        - echo "Build completed"
   artifacts:
     baseDirectory: frontend/build
     files:
@@ -19,4 +14,20 @@ frontend:
   cache:
     paths:
       - node_modules/**/*
-      - frontend/node_modules/**/* 
+      - frontend/node_modules/**/*
+backend:
+  phases:
+    build:
+      commands:
+        - npm ci
+        - echo "Backend dependencies installed"
+  artifacts:
+    baseDirectory: .
+    files:
+      - backend/**/*
+      - node_modules/**/*
+      - package.json
+      - server.js
+  cache:
+    paths:
+      - node_modules/**/* 

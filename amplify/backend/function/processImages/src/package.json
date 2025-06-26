@@ -1,0 +1,10 @@
+{
+  "name": "processimages",
+  "version": "2.0.0",
+  "description": "Lambda function for processing images",
+  "main": "index.js",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "openai": "^4.20.1"
+  }
+} 
